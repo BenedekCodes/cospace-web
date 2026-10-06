@@ -1,0 +1,27 @@
+.sidebar {
+  flex: 0 0 220px;
+  padding: 24px 16px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background-color: var(--surface);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+}
+
+.link {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--text-muted);
+}
+
+.link:hover,
+.link:focus-visible {
+  background-color: var(--card-bg);
+  color: var(--foreground);
+}
