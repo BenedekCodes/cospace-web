@@ -17,17 +17,57 @@ export const DESK_NAMES: Record<number, string> = Object.fromEntries(
   Object.entries(DESK_IDS).map(([name, id]) => [id, name]),
 );
 
-export interface ApiBooking {
+// One booking row as returned by GET /bookings, matching the bookings and desks tables.
+export interface ColleagueOpportunity {
   id: number;
   user_id: number;
   desk_id: number;
   booking_date: string; // e.g. "2026-10-12T00:00:00.000Z"
   active: boolean;
+  desk: { id: number; name: string; floor: number };
 }
 
-// GET /bookings includes the desk; the POST response does not.
-export interface ApiBookingWithDesk extends ApiBooking {
-  desk: { id: number; name: string; floor: number };
+// POST /bookings returns the row without the joined desk.
+export type CreatedBooking = Omit<ColleagueOpportunity, "desk">;
+
+export class UnexpectedResponseError extends Error {}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isCreatedBooking(value: unknown): value is CreatedBooking {
+  return (
+    isRecord(value) &&
+    typeof value.id === "number" &&
+    typeof value.user_id === "number" &&
+    typeof value.desk_id === "number" &&
+    typeof value.booking_date === "string" &&
+    typeof value.active === "boolean"
+  );
+}
+
+function isColleagueOpportunity(value: unknown): value is ColleagueOpportunity {
+  if (!isCreatedBooking(value)) return false;
+  const desk: unknown = (value as Record<string, unknown>).desk;
+  return (
+    isRecord(desk) &&
+    typeof desk.id === "number" &&
+    typeof desk.name === "string" &&
+    typeof desk.floor === "number"
+  );
+}
+
+// Takes unknown on purpose: response.json() is typed any, so nothing is trusted until checked.
+export function parseOpportunities(body: unknown): ColleagueOpportunity[] {
+  if (!isRecord(body) || !Array.isArray(body.data)) {
+    throw new UnexpectedResponseError("Expected an object with a data array");
+  }
+  const items: unknown[] = body.data;
+  if (!items.every(isColleagueOpportunity)) {
+    throw new UnexpectedResponseError("A booking in the response is missing or has a wrong-typed key");
+  }
+  return items;
 }
 
 interface NewBooking {
@@ -37,6 +77,9 @@ interface NewBooking {
 }
 
 function toErrorMessage(err: unknown): string {
+  if (err instanceof UnexpectedResponseError) {
+    return "The server sent data in an unexpected format.";
+  }
   if (axios.isAxiosError<{ error?: string }>(err)) {
     // The server answered with a 4xx/5xx status.
     if (err.response) {
@@ -51,9 +94,9 @@ function toErrorMessage(err: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-export async function postBooking(booking: NewBooking): Promise<ApiBooking> {
+export async function postBooking(booking: NewBooking): Promise<CreatedBooking> {
   try {
-    const { data } = await axios.post<ApiBooking>(
+    const { data } = await axios.post<unknown>(
       BOOKINGS_URL,
       { user_id: DEMO_USER_ID, ...booking },
       {
@@ -61,6 +104,9 @@ export async function postBooking(booking: NewBooking): Promise<ApiBooking> {
         timeout: 8000,
       },
     );
+    if (!isCreatedBooking(data)) {
+      throw new UnexpectedResponseError("Created booking is missing or has a wrong-typed key");
+    }
     return data;
   } catch (err) {
     throw new Error(toErrorMessage(err));

@@ -5,8 +5,10 @@ import {
   BOOKINGS_URL,
   DESK_IDS,
   DESK_NAMES,
+  parseOpportunities,
   postBooking,
-  type ApiBookingWithDesk,
+  UnexpectedResponseError,
+  type ColleagueOpportunity,
 } from "@/lib/api";
 import BookingCard, { type BookingCardProps } from "./BookingCard";
 import RegistrationForm from "./RegistrationForm";
@@ -17,11 +19,7 @@ interface Booking extends BookingCardProps {
   deskId: number;
 }
 
-interface BookingsResponse {
-  data: ApiBookingWithDesk[];
-}
-
-function toBooking(b: ApiBookingWithDesk): Booking {
+function toBooking(b: ColleagueOpportunity): Booking {
   return {
     id: b.id,
     deskId: b.desk_id,
@@ -47,11 +45,15 @@ export default function BookingList() {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error(`Request failed with ${response.status}`);
-        const body: BookingsResponse = await response.json();
-        setBookings(body.data.map(toBooking));
-      } catch {
+        const body: unknown = await response.json();
+        setBookings(parseOpportunities(body).map(toBooking));
+      } catch (err) {
         if (controller.signal.aborted) return;
-        setError("Could not load bookings. Check that the API is running.");
+        setError(
+          err instanceof UnexpectedResponseError
+            ? "The server sent data in an unexpected format."
+            : "Could not load bookings. Check that the API is running.",
+        );
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }
