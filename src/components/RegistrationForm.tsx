@@ -9,11 +9,13 @@ import {
   validateBooking,
   type BookingErrors,
   type BookingField,
+  type ExistingBooking,
 } from "./bookingValidation";
 import styles from "./RegistrationForm.module.css";
 
 interface RegistrationFormProps {
   onAdd: (booking: BookingCardProps) => void;
+  existingBookings: ExistingBooking[];
 }
 
 type Field = BookingField;
@@ -21,7 +23,10 @@ type Errors = BookingErrors;
 
 const FIELD_ORDER: Field[] = ["desk", "floor", "date"];
 
-export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
+export default function RegistrationForm({
+  onAdd,
+  existingBookings,
+}: RegistrationFormProps) {
   const [desk, setDesk] = useState("");
   const [floor, setFloor] = useState("");
   const [date, setDate] = useState("");
@@ -35,7 +40,7 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
   });
 
   function validate(): Errors {
-    return validateBooking({ desk, floor, date });
+    return validateBooking({ desk, floor, date }, existingBookings);
   }
 
   function clearError(field: Field) {

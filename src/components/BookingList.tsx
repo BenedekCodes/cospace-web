@@ -36,7 +36,7 @@ export default function BookingList() {
 
   return (
     <section className={styles.list}>
-      <RegistrationForm onAdd={addBooking} />
+      <RegistrationForm onAdd={addBooking} existingBookings={bookings} />
       <input
         type="search"
         className={styles.search}
