@@ -8,7 +8,7 @@ export default function Sidebar() {
         <ul className={styles.list}>
           <li>
             <Link href="/dashboard" className={styles.link}>
-              Overview
+              Dashboard
             </Link>
           </li>
           <li>

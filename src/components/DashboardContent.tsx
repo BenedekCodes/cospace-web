@@ -2,33 +2,29 @@
 
 import { useState } from "react";
 import BaseModal from "./BaseModal";
-import type { BookingCardProps } from "./BookingCard";
 import BookingsTable, { type TableBooking } from "./BookingsTable";
-import RegistrationForm from "./RegistrationForm";
+import CreateBookingForm from "./CreateBookingForm";
 import styles from "./DashboardContent.module.css";
 
 const INITIAL_BOOKINGS: TableBooking[] = [
-  { id: 1, desk: "A12", floor: 2, date: "2026-10-12", status: "Active" },
-  { id: 2, desk: "B07", floor: 4, date: "2026-10-15", status: "Active" },
-  { id: 3, desk: "C03", floor: 1, date: "2026-09-30", status: "Inactive" },
+  { id: 1, desk: "A12", floor: "2", date: "2026-10-12", status: "Active" },
+  { id: 2, desk: "B07", floor: "4", date: "2026-10-15", status: "Active" },
+  { id: 3, desk: "C03", floor: "1", date: "2026-09-30", status: "Inactive" },
 ];
 
 export default function DashboardContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [bookings, setBookings] = useState<TableBooking[]>(INITIAL_BOOKINGS);
 
-  function addBooking({ desk, floor, date, active }: BookingCardProps) {
+  function addBooking(booking: Pick<TableBooking, "desk" | "floor" | "date">) {
     setBookings((prev) => [
       ...prev,
       {
         id: Math.max(0, ...prev.map((b) => b.id)) + 1,
-        desk,
-        floor,
-        date,
-        status: active ? "Active" : "Inactive",
+        ...booking,
+        status: "Active",
       },
     ]);
-    setIsModalOpen(false);
   }
 
   return (
@@ -48,7 +44,7 @@ export default function DashboardContent() {
 
       <BaseModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <h2 className={styles.modalTitle}>New booking</h2>
-        <RegistrationForm onAdd={addBooking} />
+        <CreateBookingForm onAdd={addBooking} />
       </BaseModal>
     </div>
   );

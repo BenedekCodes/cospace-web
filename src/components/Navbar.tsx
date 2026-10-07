@@ -8,9 +8,6 @@ export default function Navbar() {
         <Link href="/" className={styles.brand}>
           Cospace
         </Link>
-        <Link href="/dashboard" className={styles.link}>
-          Dashboard
-        </Link>
       </nav>
     </header>
   );
