@@ -19,3 +19,9 @@
   font-size: 1.125rem;
   font-weight: 700;
 }
+
+@media (max-width: 767px) {
+  .nav {
+    padding: 0 16px;
+  }
+}

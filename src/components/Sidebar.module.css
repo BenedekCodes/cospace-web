@@ -26,3 +26,23 @@
   background-color: var(--card-bg);
   color: var(--foreground);
 }
+
+@media (max-width: 767px) {
+  .sidebar {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .list {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .link {
+    white-space: nowrap;
+  }
+}

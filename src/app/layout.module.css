@@ -12,3 +12,14 @@
   overflow-y: auto;
   background-color: var(--page-bg);
 }
+
+@media (max-width: 767px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  /* min-height: 0 lets the content area scroll inside the fixed-height column. */
+  .content {
+    min-height: 0;
+  }
+}
