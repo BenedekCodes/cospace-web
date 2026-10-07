@@ -3,7 +3,7 @@ import styles from "./BookingsTable.module.css";
 export interface TableBooking {
   id: number;
   desk: string;
-  floor: number;
+  floor: string;
   date: string;
   status: "Active" | "Inactive";
 }
