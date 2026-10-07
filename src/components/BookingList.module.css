@@ -16,3 +16,12 @@
 .empty {
   color: var(--text-muted);
 }
+
+.alertBox {
+  padding: 10px 14px;
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--error) 10%, transparent);
+  color: var(--error);
+  font-size: 0.875rem;
+}

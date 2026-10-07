@@ -104,7 +104,7 @@ export default function BookingList() {
           Loading...
         </p>
       ) : error ? (
-        <p role="alert" className={styles.empty}>
+        <p role="alert" className={styles.alertBox}>
           {error}
         </p>
       ) : bookings.length === 0 ? (

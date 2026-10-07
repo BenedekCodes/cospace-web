@@ -76,6 +76,9 @@ interface NewBooking {
   active: boolean;
 }
 
+export const OFFLINE_MESSAGE =
+  "The database server is currently offline. Please check your connection.";
+
 function toErrorMessage(err: unknown): string {
   if (err instanceof UnexpectedResponseError) {
     return "The server sent data in an unexpected format.";
@@ -85,11 +88,12 @@ function toErrorMessage(err: unknown): string {
     if (err.response) {
       return err.response.data?.error ?? `The server returned an error (${err.response.status}).`;
     }
-    if (err.code === "ECONNABORTED") {
+    // A timeout also has no response, so it is checked before the offline case.
+    if (err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") {
       return "The request timed out. Please try again.";
     }
-    // No response at all: server down, network offline or request blocked.
-    return "Cannot reach the server. Check your connection and that the API is running.";
+    // No response at all: the server is down or the network is unreachable.
+    return OFFLINE_MESSAGE;
   }
   return "Something went wrong. Please try again.";
 }
