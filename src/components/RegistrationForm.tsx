@@ -68,9 +68,6 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
     return {
       errorId,
       inputProps: {
-        ref: (el: HTMLInputElement | null) => {
-          inputRefs.current[field] = el;
-        },
         className: styles.input,
         "aria-required": true,
         "aria-invalid": invalid || undefined,
@@ -88,6 +85,9 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
       <div className={styles.field}>
         <input
           {...deskA11y.inputProps}
+          ref={(el) => {
+            inputRefs.current.desk = el;
+          }}
           placeholder="Desk (e.g. A12)"
           aria-label="Desk"
           value={desk}
@@ -105,6 +105,9 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
       <div className={styles.field}>
         <input
           {...floorA11y.inputProps}
+          ref={(el) => {
+            inputRefs.current.floor = el;
+          }}
           type="number"
           min={0}
           placeholder="Floor"
@@ -124,6 +127,9 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
       <div className={styles.field}>
         <input
           {...dateA11y.inputProps}
+          ref={(el) => {
+            inputRefs.current.date = el;
+          }}
           type="date"
           aria-label="Date"
           value={date}
