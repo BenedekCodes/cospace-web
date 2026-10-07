@@ -3,13 +3,15 @@
   inset: 0;
   z-index: 1000;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
   background: rgba(107, 114, 128, 0.6);
 }
 
 .modal {
   position: relative;
+  /* auto margins center the box but, unlike align-items, never clip it when taller than the viewport. */
+  margin: auto;
   width: min(90vw, 480px);
   padding: 24px;
   border-radius: 12px;
