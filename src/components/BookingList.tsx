@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from "react";
 import {
-  BOOKINGS_URL,
   DESK_IDS,
   DESK_NAMES,
-  parseOpportunities,
+  getOpportunities,
   postBooking,
-  UnexpectedResponseError,
   type ColleagueOpportunity,
 } from "@/lib/api";
 import BookingCard, { type BookingCardProps } from "./BookingCard";
@@ -41,19 +39,11 @@ export default function BookingList() {
 
     async function loadBookings() {
       try {
-        const response = await fetch(`${BOOKINGS_URL}?limit=50`, {
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error(`Request failed with ${response.status}`);
-        const body: unknown = await response.json();
-        setBookings(parseOpportunities(body).map(toBooking));
+        const opportunities = await getOpportunities(controller.signal);
+        setBookings(opportunities.map(toBooking));
       } catch (err) {
         if (controller.signal.aborted) return;
-        setError(
-          err instanceof UnexpectedResponseError
-            ? "The server sent data in an unexpected format."
-            : "Could not load bookings. Check that the API is running.",
-        );
+        setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }

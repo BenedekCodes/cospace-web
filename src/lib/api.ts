@@ -94,6 +94,21 @@ function toErrorMessage(err: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
+export async function getOpportunities(signal: AbortSignal): Promise<ColleagueOpportunity[]> {
+  try {
+    const { data } = await axios.get<unknown>(BOOKINGS_URL, {
+      params: { limit: 50 },
+      signal,
+      timeout: 8000,
+    });
+    return parseOpportunities(data);
+  } catch (err) {
+    // A cancelled request is the caller's doing, not a failure to report.
+    if (axios.isCancel(err)) throw err;
+    throw new Error(toErrorMessage(err));
+  }
+}
+
 export async function postBooking(booking: NewBooking): Promise<CreatedBooking> {
   try {
     const { data } = await axios.post<unknown>(
