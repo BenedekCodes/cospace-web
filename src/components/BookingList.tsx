@@ -1,13 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BOOKINGS_URL, DESK_IDS, postBooking, type ApiBookingWithDesk } from "@/lib/api";
+import {
+  BOOKINGS_URL,
+  DESK_IDS,
+  DESK_NAMES,
+  postBooking,
+  type ApiBookingWithDesk,
+} from "@/lib/api";
 import BookingCard, { type BookingCardProps } from "./BookingCard";
 import RegistrationForm from "./RegistrationForm";
 import styles from "./BookingList.module.css";
 
 interface Booking extends BookingCardProps {
   id: number;
+  deskId: number;
 }
 
 interface BookingsResponse {
@@ -17,6 +24,7 @@ interface BookingsResponse {
 function toBooking(b: ApiBookingWithDesk): Booking {
   return {
     id: b.id,
+    deskId: b.desk_id,
     desk: b.desk.name,
     floor: b.desk.floor,
     date: b.booking_date.slice(0, 10),
@@ -59,7 +67,7 @@ export default function BookingList() {
 
     // Show the card straight away under a temporary negative id, then swap in the real one.
     const tempId = -Date.now();
-    setBookings((prev) => [...prev, { ...booking, id: tempId }]);
+    setBookings((prev) => [...prev, { ...booking, id: tempId, deskId }]);
 
     try {
       const saved = await postBooking({
@@ -74,6 +82,12 @@ export default function BookingList() {
     }
   }
 
+  // The form uses names like A01 while the API names desks Desk-01, so compare by desk id.
+  const existingBookings = bookings.map((b) => ({
+    desk: DESK_NAMES[b.deskId] ?? b.desk,
+    date: b.date,
+  }));
+
   const needle = query.trim().toLowerCase();
   const visible = bookings.filter((b) =>
     [b.desk, `floor ${b.floor}`, b.date, b.active ? "active" : "inactive"]
@@ -84,7 +98,7 @@ export default function BookingList() {
 
   return (
     <section className={styles.list}>
-      <RegistrationForm onAdd={addBooking} existingBookings={bookings} />
+      <RegistrationForm onAdd={addBooking} existingBookings={existingBookings} />
       <input
         type="search"
         className={styles.search}

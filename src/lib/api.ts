@@ -13,6 +13,10 @@ export const DESK_IDS: Record<string, number> = {
   B02: 4,
 };
 
+export const DESK_NAMES: Record<number, string> = Object.fromEntries(
+  Object.entries(DESK_IDS).map(([name, id]) => [id, name]),
+);
+
 export interface ApiBooking {
   id: number;
   user_id: number;
