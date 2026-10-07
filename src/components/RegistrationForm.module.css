@@ -5,11 +5,27 @@
 }
 
 .input {
-  flex: 1 1 120px;
+  width: 100%;
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font: inherit;
+}
+
+.field {
+  display: flex;
+  flex: 1 1 120px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--error);
+}
+
+.error {
+  color: var(--error);
+  font-size: 0.875rem;
 }
 
 .button {

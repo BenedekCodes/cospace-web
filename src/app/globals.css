@@ -1,4 +1,6 @@
 :root {
+  --navbar-height: 56px;
+
   --background: #ffffff;
   --foreground: #171717;
 
@@ -10,6 +12,7 @@
   --accent: #000;
   --accent-fg: #fff;
   --accent-hover: #383838;
+  --error: #b91c1c;
   --badge-active-bg: #dcfce7;
   --badge-active-fg: #166534;
   --badge-inactive-bg: #f2f2f2;
@@ -29,6 +32,7 @@
     --accent: #ededed;
     --accent-fg: #0a0a0a;
     --accent-hover: #ccc;
+    --error: #f87171;
     --badge-active-bg: #14532d;
     --badge-active-fg: #bbf7d0;
     --badge-inactive-bg: #1f1f1f;

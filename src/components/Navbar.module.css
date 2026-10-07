@@ -1,0 +1,34 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--navbar-height);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--surface);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  max-width: 800px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.brand {
+  margin-right: auto;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.link {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--foreground);
+}

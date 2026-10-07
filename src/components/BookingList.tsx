@@ -48,7 +48,7 @@ export default function BookingList() {
       {visible.length === 0 ? (
         <p className={styles.empty}>No bookings match &ldquo;{query}&rdquo;.</p>
       ) : (
-        visible.map(({ id, ...props }) => <BookingCard key={id} {...props} />)
+        visible.map((booking) => <BookingCard key={booking.id} {...booking} />)
       )}
     </section>
   );
