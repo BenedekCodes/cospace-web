@@ -1,6 +1,12 @@
 import axios from "axios";
 
 export const BOOKINGS_URL = "http://localhost:5000/bookings";
+const DESKS_URL = "http://localhost:5000/desks";
+
+// Only suitable for a mock backend: NEXT_PUBLIC_ variables are readable in the browser.
+function authHeaders() {
+  return { Authorization: process.env.NEXT_PUBLIC_API_TOKEN ?? "" };
+}
 
 // No login yet, so every booking is saved for this user; it must exist in the database.
 const DEMO_USER_ID = 1;
@@ -119,7 +125,7 @@ export async function postBooking(booking: NewBooking): Promise<CreatedBooking> 
       BOOKINGS_URL,
       { user_id: DEMO_USER_ID, ...booking },
       {
-        headers: { Authorization: process.env.NEXT_PUBLIC_API_TOKEN ?? "" },
+        headers: authHeaders(),
         timeout: 8000,
       },
     );
@@ -127,6 +133,49 @@ export async function postBooking(booking: NewBooking): Promise<CreatedBooking> 
       throw new UnexpectedResponseError("Created booking is missing or has a wrong-typed key");
     }
     return data;
+  } catch (err) {
+    throw new Error(toErrorMessage(err));
+  }
+}
+
+export interface Desk {
+  id: number;
+  name: string;
+  floor: number;
+}
+
+function isDesk(value: unknown): value is Desk {
+  return (
+    isRecord(value) &&
+    typeof value.id === "number" &&
+    typeof value.name === "string" &&
+    typeof value.floor === "number"
+  );
+}
+
+// Finds the desk with this name, or creates it, so any desk can be booked.
+export async function ensureDesk(name: string, floor: number): Promise<Desk> {
+  try {
+    const { data: list } = await axios.get<unknown>(DESKS_URL, { timeout: 8000 });
+    if (!isRecord(list) || !Array.isArray(list.data)) {
+      throw new UnexpectedResponseError("Expected an object with a data array of desks");
+    }
+    const desks: unknown[] = list.data;
+    if (!desks.every(isDesk)) {
+      throw new UnexpectedResponseError("A desk in the response is missing or has a wrong-typed key");
+    }
+    const existing = desks.find((desk) => desk.name === name);
+    if (existing) return existing;
+
+    const { data: created } = await axios.post<unknown>(
+      DESKS_URL,
+      { name, floor },
+      { headers: authHeaders(), timeout: 8000 },
+    );
+    if (!isDesk(created)) {
+      throw new UnexpectedResponseError("Created desk is missing or has a wrong-typed key");
+    }
+    return created;
   } catch (err) {
     throw new Error(toErrorMessage(err));
   }
