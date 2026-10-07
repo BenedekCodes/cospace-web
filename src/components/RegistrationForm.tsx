@@ -2,14 +2,22 @@
 
 import { useId, useRef, useState, type FormEvent } from "react";
 import type { BookingCardProps } from "./BookingCard";
+import {
+  getDateBounds,
+  DESK_LENGTH,
+  MAX_FLOOR,
+  validateBooking,
+  type BookingErrors,
+  type BookingField,
+} from "./bookingValidation";
 import styles from "./RegistrationForm.module.css";
 
 interface RegistrationFormProps {
   onAdd: (booking: BookingCardProps) => void;
 }
 
-type Field = "desk" | "floor" | "date";
-type Errors = Partial<Record<Field, string>>;
+type Field = BookingField;
+type Errors = BookingErrors;
 
 const FIELD_ORDER: Field[] = ["desk", "floor", "date"];
 
@@ -27,15 +35,7 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
   });
 
   function validate(): Errors {
-    const next: Errors = {};
-    if (!desk.trim()) next.desk = "Enter a desk, for example A12.";
-    if (floor === "") {
-      next.floor = "Enter a floor number.";
-    } else if (!Number.isInteger(Number(floor)) || Number(floor) < 0) {
-      next.floor = "Floor must be a whole number, 0 or higher.";
-    }
-    if (!date) next.date = "Choose a booking date.";
-    return next;
+    return validateBooking({ desk, floor, date });
   }
 
   function clearError(field: Field) {
@@ -60,6 +60,7 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
     setDesk("");
     setFloor("");
     setDate("");
+    inputRefs.current.desk?.focus();
   }
 
   function a11yProps(field: Field) {
@@ -79,6 +80,7 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
   const deskA11y = a11yProps("desk");
   const floorA11y = a11yProps("floor");
   const dateA11y = a11yProps("date");
+  const dateBounds = getDateBounds();
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
@@ -90,14 +92,15 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
           }}
           placeholder="Desk (e.g. A12)"
           aria-label="Desk"
+          maxLength={DESK_LENGTH}
           value={desk}
           onChange={(e) => {
-            setDesk(e.target.value);
+            setDesk(e.target.value.toUpperCase());
             clearError("desk");
           }}
         />
         {errors.desk && (
-          <p id={deskA11y.errorId} className={styles.error}>
+          <p id={deskA11y.errorId} role="alert" className={styles.error}>
             {errors.desk}
           </p>
         )}
@@ -110,6 +113,7 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
           }}
           type="number"
           min={0}
+          max={MAX_FLOOR}
           placeholder="Floor"
           aria-label="Floor"
           value={floor}
@@ -119,7 +123,7 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
           }}
         />
         {errors.floor && (
-          <p id={floorA11y.errorId} className={styles.error}>
+          <p id={floorA11y.errorId} role="alert" className={styles.error}>
             {errors.floor}
           </p>
         )}
@@ -131,6 +135,8 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
             inputRefs.current.date = el;
           }}
           type="date"
+          min={dateBounds.min}
+          max={dateBounds.max}
           aria-label="Date"
           value={date}
           onChange={(e) => {
@@ -139,7 +145,7 @@ export default function RegistrationForm({ onAdd }: RegistrationFormProps) {
           }}
         />
         {errors.date && (
-          <p id={dateA11y.errorId} className={styles.error}>
+          <p id={dateA11y.errorId} role="alert" className={styles.error}>
             {errors.date}
           </p>
         )}
