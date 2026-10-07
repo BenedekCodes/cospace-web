@@ -56,3 +56,23 @@
 .button:hover {
   background-color: var(--accent-hover);
 }
+
+@media (max-width: 480px) {
+  .form {
+    flex-direction: column;
+  }
+
+  /* In a column, flex-basis would set the height, so reset it. */
+  .field {
+    flex: 0 0 auto;
+  }
+
+  .alertBox {
+    flex-basis: auto;
+  }
+
+  .input,
+  .button {
+    padding-block: 12px;
+  }
+}
