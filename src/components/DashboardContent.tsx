@@ -44,7 +44,7 @@ export default function DashboardContent() {
 
       <BaseModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <h2 className={styles.modalTitle}>New booking</h2>
-        <CreateBookingForm onAdd={addBooking} />
+        <CreateBookingForm onAdd={addBooking} existingBookings={bookings} />
       </BaseModal>
     </div>
   );

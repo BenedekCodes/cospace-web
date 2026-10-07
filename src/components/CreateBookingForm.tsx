@@ -7,14 +7,19 @@ import {
   validateBooking,
   type BookingErrors,
   type BookingValues,
+  type ExistingBooking,
 } from "./bookingValidation";
 import styles from "./CreateBookingForm.module.css";
 
 interface CreateBookingFormProps {
   onAdd: (booking: BookingValues) => void;
+  existingBookings: ExistingBooking[];
 }
 
-export default function CreateBookingForm({ onAdd }: CreateBookingFormProps) {
+export default function CreateBookingForm({
+  onAdd,
+  existingBookings,
+}: CreateBookingFormProps) {
   const [desk, setDesk] = useState("");
   const [floor, setFloor] = useState("");
   const [date, setDate] = useState("");
@@ -39,7 +44,7 @@ export default function CreateBookingForm({ onAdd }: CreateBookingFormProps) {
 
     if (isLoading) return;
 
-    const nextErrors = validateBooking({ desk, floor, date });
+    const nextErrors = validateBooking({ desk, floor, date }, existingBookings);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 

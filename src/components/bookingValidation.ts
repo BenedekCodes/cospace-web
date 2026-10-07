@@ -1,6 +1,7 @@
 export type BookingField = "desk" | "floor" | "date";
 export type BookingValues = Record<BookingField, string>;
 export type BookingErrors = Partial<Record<BookingField, string>>;
+export type ExistingBooking = Pick<BookingValues, "desk" | "date">;
 
 export const DESK_LENGTH = 3;
 export const MAX_FLOOR = 99;
@@ -23,7 +24,10 @@ export function getDateBounds(): { min: string; max: string } {
   return { min: toIsoDate(today), max: toIsoDate(latest) };
 }
 
-export function validateBooking({ desk, floor, date }: BookingValues): BookingErrors {
+export function validateBooking(
+  { desk, floor, date }: BookingValues,
+  existing: ExistingBooking[] = [],
+): BookingErrors {
   const errors: BookingErrors = {};
   const trimmedDesk = desk.trim();
   const trimmedFloor = floor.trim();
@@ -51,6 +55,15 @@ export function validateBooking({ desk, floor, date }: BookingValues): BookingEr
     errors.date = "Date cannot be in the past.";
   } else if (date > max) {
     errors.date = `Date must be within the next ${MAX_MONTHS_AHEAD} months.`;
+  }
+
+  // A desk can only be booked once per date; report it on the desk field.
+  if (
+    !errors.desk &&
+    !errors.date &&
+    existing.some((b) => b.desk === trimmedDesk && b.date === date)
+  ) {
+    errors.desk = `Desk ${trimmedDesk} is already booked on ${date}.`;
   }
 
   return errors;
