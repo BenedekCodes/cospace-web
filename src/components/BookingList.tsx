@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
-  DESK_IDS,
-  DESK_NAMES,
+  ensureDesk,
   getOpportunities,
   postBooking,
   type ColleagueOpportunity,
@@ -14,13 +13,11 @@ import styles from "./BookingList.module.css";
 
 interface Booking extends BookingCardProps {
   id: number;
-  deskId: number;
 }
 
 function toBooking(b: ColleagueOpportunity): Booking {
   return {
     id: b.id,
-    deskId: b.desk_id,
     desk: b.desk.name,
     floor: b.desk.floor,
     date: b.booking_date.slice(0, 10),
@@ -54,31 +51,26 @@ export default function BookingList() {
   }, []);
 
   async function addBooking(booking: BookingCardProps) {
-    const deskId = DESK_IDS[booking.desk];
-    if (deskId === undefined) throw new Error(`Unknown desk ${booking.desk}.`);
-
     // Show the card straight away under a temporary negative id, then swap in the real one.
     const tempId = -Date.now();
-    setBookings((prev) => [...prev, { ...booking, id: tempId, deskId }]);
+    setBookings((prev) => [...prev, { ...booking, id: tempId }]);
 
     try {
+      const desk = await ensureDesk(booking.desk, booking.floor);
       const saved = await postBooking({
-        desk_id: deskId,
+        desk_id: desk.id,
         booking_date: booking.date,
         active: booking.active,
       });
-      setBookings((prev) => prev.map((b) => (b.id === tempId ? { ...b, id: saved.id } : b)));
+      // An existing desk keeps its stored floor, so show that rather than what was typed.
+      setBookings((prev) =>
+        prev.map((b) => (b.id === tempId ? { ...b, id: saved.id, floor: desk.floor } : b)),
+      );
     } catch (err) {
       setBookings((prev) => prev.filter((b) => b.id !== tempId));
       throw err;
     }
   }
-
-  // The form uses names like A01 while the API names desks Desk-01, so compare by desk id.
-  const existingBookings = bookings.map((b) => ({
-    desk: DESK_NAMES[b.deskId] ?? b.desk,
-    date: b.date,
-  }));
 
   const needle = query.trim().toLowerCase();
   const visible = bookings.filter((b) =>
@@ -92,7 +84,7 @@ export default function BookingList() {
     <section className={styles.list}>
       <div className={styles.panel}>
         <h2 className={styles.panelTitle}>Add a booking</h2>
-        <RegistrationForm onAdd={addBooking} existingBookings={existingBookings} />
+        <RegistrationForm onAdd={addBooking} existingBookings={bookings} />
       </div>
 
       <div className={styles.toolbar}>

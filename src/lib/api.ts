@@ -11,18 +11,6 @@ function authHeaders() {
 // No login yet, so every booking is saved for this user; it must exist in the database.
 const DEMO_USER_ID = 1;
 
-// Form desk names mapped to the desk ids in the database.
-export const DESK_IDS: Record<string, number> = {
-  A01: 1,
-  A02: 2,
-  B01: 3,
-  B02: 4,
-};
-
-export const DESK_NAMES: Record<number, string> = Object.fromEntries(
-  Object.entries(DESK_IDS).map(([name, id]) => [id, name]),
-);
-
 // One booking row as returned by GET /bookings, matching the bookings and desks tables.
 export interface ColleagueOpportunity {
   id: number;

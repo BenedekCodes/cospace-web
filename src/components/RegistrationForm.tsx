@@ -1,7 +1,6 @@
 "use client";
 
 import { useId, useRef, useState, type FormEvent } from "react";
-import { DESK_IDS } from "@/lib/api";
 import type { BookingCardProps } from "./BookingCard";
 import {
   getDateBounds,
@@ -43,11 +42,7 @@ export default function RegistrationForm({
   });
 
   function validate(): Errors {
-    const next = validateBooking({ desk, floor, date }, existingBookings);
-    if (!next.desk && !(desk.trim() in DESK_IDS)) {
-      next.desk = `Unknown desk. Use one of ${Object.keys(DESK_IDS).join(", ")}.`;
-    }
-    return next;
+    return validateBooking({ desk, floor, date }, existingBookings);
   }
 
   function clearError(field: Field) {
