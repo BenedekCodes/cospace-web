@@ -32,18 +32,33 @@ interface NewBooking {
   active: boolean;
 }
 
+function toErrorMessage(err: unknown): string {
+  if (axios.isAxiosError<{ error?: string }>(err)) {
+    // The server answered with a 4xx/5xx status.
+    if (err.response) {
+      return err.response.data?.error ?? `The server returned an error (${err.response.status}).`;
+    }
+    if (err.code === "ECONNABORTED") {
+      return "The request timed out. Please try again.";
+    }
+    // No response at all: server down, network offline or request blocked.
+    return "Cannot reach the server. Check your connection and that the API is running.";
+  }
+  return "Something went wrong. Please try again.";
+}
+
 export async function postBooking(booking: NewBooking): Promise<ApiBooking> {
   try {
     const { data } = await axios.post<ApiBooking>(
       BOOKINGS_URL,
       { user_id: DEMO_USER_ID, ...booking },
-      { headers: { Authorization: process.env.NEXT_PUBLIC_API_TOKEN ?? "" } },
+      {
+        headers: { Authorization: process.env.NEXT_PUBLIC_API_TOKEN ?? "" },
+        timeout: 8000,
+      },
     );
     return data;
   } catch (err) {
-    if (axios.isAxiosError<{ error?: string }>(err) && err.response?.data?.error) {
-      throw new Error(err.response.data.error);
-    }
-    throw new Error("Could not save the booking. Check that the API is running.");
+    throw new Error(toErrorMessage(err));
   }
 }

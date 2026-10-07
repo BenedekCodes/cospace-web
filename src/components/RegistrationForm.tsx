@@ -176,7 +176,7 @@ export default function RegistrationForm({
         {isLoading ? "Saving..." : "Add booking"}
       </button>
       {submitError && (
-        <p role="alert" className={`${styles.error} ${styles.formError}`}>
+        <p role="alert" className={styles.alertBox}>
           {submitError}
         </p>
       )}
