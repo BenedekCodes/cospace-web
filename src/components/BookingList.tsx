@@ -90,15 +90,27 @@ export default function BookingList() {
 
   return (
     <section className={styles.list}>
-      <RegistrationForm onAdd={addBooking} existingBookings={existingBookings} />
-      <input
-        type="search"
-        className={styles.search}
-        placeholder="Search by desk, floor, date or status"
-        aria-label="Search bookings"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <div className={styles.panel}>
+        <h2 className={styles.panelTitle}>Add a booking</h2>
+        <RegistrationForm onAdd={addBooking} existingBookings={existingBookings} />
+      </div>
+
+      <div className={styles.toolbar}>
+        <input
+          type="search"
+          className={styles.search}
+          placeholder="Search bookings"
+          aria-label="Search bookings"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {!isLoading && !error && bookings.length > 0 && (
+          <p className={styles.count} aria-live="polite">
+            {visible.length} of {bookings.length} bookings
+          </p>
+        )}
+      </div>
+
       {isLoading ? (
         <p role="status" className={styles.empty}>
           Loading...
@@ -112,7 +124,13 @@ export default function BookingList() {
       ) : visible.length === 0 ? (
         <p className={styles.empty}>No bookings match &ldquo;{query}&rdquo;.</p>
       ) : (
-        visible.map((booking) => <BookingCard key={booking.id} {...booking} />)
+        <ul className={styles.grid}>
+          {visible.map((booking) => (
+            <li key={booking.id}>
+              <BookingCard {...booking} />
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

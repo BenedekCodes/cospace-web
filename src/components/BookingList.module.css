@@ -2,15 +2,54 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+}
+
+.panel {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--surface);
+}
+
+.panelTitle {
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .search {
-  width: 100%;
+  flex: 1 1 260px;
+  max-width: 420px;
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font: inherit;
+}
+
+.count {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  list-style: none;
+}
+
+@media (max-width: 480px) {
+  .search {
+    max-width: none;
+  }
 }
 
 .empty {
