@@ -31,3 +31,14 @@
   line-height: 1;
   cursor: pointer;
 }
+
+@media (max-width: 480px) {
+  .backdrop {
+    padding: 8px;
+  }
+
+  .modal {
+    width: 100%;
+    padding: 20px 16px;
+  }
+}
