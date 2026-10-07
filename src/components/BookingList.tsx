@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BOOKINGS_URL, DESK_IDS, postBooking, type ApiBookingWithDesk } from "@/lib/api";
 import BookingCard, { type BookingCardProps } from "./BookingCard";
 import RegistrationForm from "./RegistrationForm";
 import styles from "./BookingList.module.css";
@@ -9,22 +10,11 @@ interface Booking extends BookingCardProps {
   id: number;
 }
 
-interface ApiBooking {
-  id: number;
-  user_id: number;
-  desk_id: number;
-  booking_date: string; // e.g. "2026-10-12T00:00:00.000Z"
-  active: boolean;
-  desk: { id: number; name: string; floor: number };
-}
-
 interface BookingsResponse {
-  data: ApiBooking[];
+  data: ApiBookingWithDesk[];
 }
 
-const BOOKINGS_URL = "http://localhost:5000/bookings?limit=50";
-
-function toBooking(b: ApiBooking): Booking {
+function toBooking(b: ApiBookingWithDesk): Booking {
   return {
     id: b.id,
     desk: b.desk.name,
@@ -45,7 +35,9 @@ export default function BookingList() {
 
     async function loadBookings() {
       try {
-        const response = await fetch(BOOKINGS_URL, { signal: controller.signal });
+        const response = await fetch(`${BOOKINGS_URL}?limit=50`, {
+          signal: controller.signal,
+        });
         if (!response.ok) throw new Error(`Request failed with ${response.status}`);
         const body: BookingsResponse = await response.json();
         setBookings(body.data.map(toBooking));
@@ -61,11 +53,25 @@ export default function BookingList() {
     return () => controller.abort();
   }, []);
 
-  function addBooking(booking: BookingCardProps) {
-    setBookings((prev) => [
-      ...prev,
-      { ...booking, id: Math.max(0, ...prev.map((b) => b.id)) + 1 },
-    ]);
+  async function addBooking(booking: BookingCardProps) {
+    const deskId = DESK_IDS[booking.desk];
+    if (deskId === undefined) throw new Error(`Unknown desk ${booking.desk}.`);
+
+    // Show the card straight away under a temporary negative id, then swap in the real one.
+    const tempId = -Date.now();
+    setBookings((prev) => [...prev, { ...booking, id: tempId }]);
+
+    try {
+      const saved = await postBooking({
+        desk_id: deskId,
+        booking_date: booking.date,
+        active: booking.active,
+      });
+      setBookings((prev) => prev.map((b) => (b.id === tempId ? { ...b, id: saved.id } : b)));
+    } catch (err) {
+      setBookings((prev) => prev.filter((b) => b.id !== tempId));
+      throw err;
+    }
   }
 
   const needle = query.trim().toLowerCase();
