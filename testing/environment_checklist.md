@@ -10,15 +10,15 @@ Runbook for the testing curriculum. Statuses are checked against the two `packag
 
 | Item | Frontend (`cospace-web`) | Backend (`cospace-backend`) |
 |---|---|---|
-| Scripts in `package.json` | `dev`, `build`, `start`, `lint`, `test` (`jest`) | `dev` and `start` (both `ts-node-dev`, `start` without respawn), `test` (`jest`) |
+| Scripts in `package.json` | `dev`, `build`, `start`, `lint`, `test` (`jest`), `test:e2e` (`playwright test`), `test:cypress` (`cypress run`) | `dev` (`ts-node-dev` with respawn), `start` (`node server.js`, an empty file, left as it was), `test` (`jest`, replacing the npm placeholder) |
 | Jest | installed, `jest.config.ts` uses `next/jest` with jsdom | installed with `ts-jest`, `jest.config.js` with the node environment |
 | React Testing Library | installed (`@testing-library/react`, `dom`, `jest-dom`, `user-event`) | not applicable |
-| Supertest | not applicable | installed (`supertest`, `@types/supertest`), no tests yet |
-| Playwright / Cypress | installed (`@playwright/test` 1.64.0, `cypress` 16.1.1 with its binary, `start-server-and-test`), no config or specs yet | not applicable |
-| Test files | `src/components/bookingValidation.test.ts`, `src/components/BookingCard.test.tsx`, `src/lib/api.test.ts` | `tests/schemas/booking.schema.test.ts` |
-| Module / TS notes | `type` unset, `module: esnext`, alias `@/*` to `./src/*`. The alias resolves in Jest through `next/jest` (verified by `api.test.ts`). | `commonjs`. `tsconfig.test.json` extends the build config with `rootDir: .`, `types: [node, jest]` and `tests/**` included. The build `tsconfig.json` is unchanged. |
+| Supertest | not applicable | installed (`supertest`, `@types/supertest`), 4 smoke tests in `tests/app.smoke.test.ts` |
+| Playwright / Cypress | `@playwright/test` 1.64.0 with `playwright.config.ts` and `e2e/smoke.spec.ts`, but Playwright's own browsers are not installed (the download was cancelled). `cypress` 16.1.1 with its binary, `cypress.config.ts` and `cypress/e2e/smoke.cy.ts`. `start-server-and-test` is installed and not used yet. | not applicable |
+| Test files | `src/components/bookingValidation.test.ts`, `src/components/BookingCard.test.tsx`, `src/lib/api.test.ts`, `e2e/smoke.spec.ts` (Playwright), `cypress/e2e/smoke.cy.ts` (Cypress) | `tests/schemas/booking.schema.test.ts`, `tests/app.smoke.test.ts` |
+| Module / TS notes | `type` unset, `module: esnext`, alias `@/*` to `./src/*`. The alias resolves in Jest through `next/jest` (verified by `api.test.ts`). Cypress has its own `cypress/tsconfig.json`, and `cypress` is excluded from the app `tsconfig.json` so its globals do not clash with Jest's. | `commonjs`. `src/app.ts` builds the Express app and `src/index.ts` only listens. `tsconfig.test.json` extends the build config with `rootDir: .`, `types: [node, jest]` and `tests/**` included. The build `tsconfig.json` is unchanged. |
 
-The Jest smoke tests pass in both projects (frontend 5 tests, backend 2 tests). `npx jest --passWithNoTests` passes in both, `npx playwright --version` prints 1.64.0, and `npx cypress --version` reports package and binary 16.1.1. Supertest, Playwright and Cypress have no tests or configuration yet.
+Verified results: Jest passes in both projects (frontend 5 tests, backend 6 tests including the 4 Supertest smoke tests). `npx cypress run` passes the Cypress smoke spec against the running dev server. The Playwright spec passes when run through the installed Google Chrome with a temporary config, but `npm run test:e2e` itself needs Playwright's browsers, which are not installed (see section 3).
 
 ## 2. Tool responsibility map
 
@@ -40,22 +40,21 @@ Playwright and Cypress cover the same boundary. Both are installed for the curri
 |---|---|---|---|
 | Start frontend | `cospace-web` | `npm run dev` | Node, `.env.local` with `NEXT_PUBLIC_API_TOKEN` |
 | Lint frontend | `cospace-web` | `npm run lint` | none |
-| Start backend | `cospace-backend` | `npm run dev` (respawns on change) or `npm start` | MySQL running, `DATABASE_URL` in `.env` |
+| Start backend | `cospace-backend` | `npm run dev` (respawns on change) | MySQL running, `DATABASE_URL` in `.env` |
 | Frontend Jest + RTL | `cospace-web` | `npm test` | none |
-| Backend Jest | `cospace-backend` | `npm test` | none for the schema smoke test |
+| Backend Jest + Supertest | `cospace-backend` | `npm test` | none, the smoke tests mock `utils/db` |
+| Cypress smoke | `cospace-web` | `npm run test:cypress` | Frontend dev server on port 3000 (`npm run dev`) |
 
-`npm start` in the backend used to run `node server.js`, which is an empty file, so it started nothing. It now runs `src/index.ts` like `dev`.
+`npm start` in the backend still runs `node server.js`, which is an empty file, so it starts nothing. Use `npm run dev`. The script was left alone because Step 5 says not to overwrite existing scripts. Only the npm placeholder `test` script was replaced.
 
-### Installed but not configured yet
+### Needs one more step
 
-| Tool | Folder | Status | Next step |
-|---|---|---|---|
-| Supertest | `cospace-backend` | installed | Write tests after blockers B1 and B2 are resolved. It runs through the existing `npm test`. |
-| Playwright | `cospace-web` | `@playwright/test` installed. The browsers come from `npx playwright install`, a large download (Chromium alone is about 190 MiB) that was slow on this network. `npx playwright install chromium` is a lighter option. | Add `playwright.config.ts` and a `"test:e2e": "playwright test"` script. |
-| Cypress | `cospace-web` | installed, binary 16.1.1 present | Add `cypress.config.ts` only if Cypress is chosen for the journeys. |
-| start-server-and-test | `cospace-web` | installed | Use it to start the servers and run an E2E command in one script. |
+| Tool | Status | Next step |
+|---|---|---|
+| Playwright (`npm run test:e2e`) | Configured with one Chromium project and a home-page smoke spec. Its `webServer` setting reuses a dev server on port 3000 or starts `npm run dev`. Playwright's own browsers are not installed. | Run `npx playwright install chromium` once (a large download that was slow on this network), then `npm run test:e2e`. |
+| start-server-and-test | Installed and not used in any script. | Use it to start the dev server and run `npm run test:cypress` in one command when a CI job is added. |
 
-Jest matches `*.spec.ts` files by default, so Playwright specs placed inside the frontend project would be picked up by `npm test`. Exclude the E2E folder with `testPathIgnorePatterns` in `jest.config.ts` when the first spec is added.
+Jest ignores `e2e/` and `cypress/` through `testPathIgnorePatterns` in `jest.config.ts`, so `npm test` does not pick up the Playwright specs.
 
 ## 4. Services each test needs
 
@@ -64,9 +63,10 @@ Jest matches `*.spec.ts` files by default, so Playwright specs placed inside the
 | Jest unit (schemas, `validateBooking`) | no | no | no | Pure functions. |
 | Jest `BookingService` with fake repository | no | no | no, but see blocker B1 | Importing the service loads `utils/db`. |
 | RTL component | no | no | no | Mock `@/lib/api` for `BookingList`. |
-| Supertest, auth and validation only | no | no (Supertest starts its own in-process app) | needed at import, see B1 and B2 | The 401 and 400 paths do not query the database. |
+| Supertest, auth and validation only | no | no (Supertest uses the in-process app from `src/app.ts`) | no (`utils/db` is mocked) | The 401 and 400 paths do not query the database. |
 | Supertest with persistence | no | no | yes, a separate test database | Never the development database. |
-| Playwright / Cypress | yes (`npm run dev` or `build` + `start`) | yes (`npm run dev`) | yes | The browser journey needs all three. CORS allows only `http://localhost:3000`. |
+| Playwright / Cypress home-page smoke | yes (`npm run dev`) | no | no | `BookingList` renders the search box while loading or on error. |
+| Playwright / Cypress journeys with data | yes (`npm run dev` or `build` + `start`) | yes (`npm run dev`) | yes | The booking journeys need all three. CORS allows only `http://localhost:3000`. |
 | Manual exploratory | yes | yes | yes | Not automated and not a pyramid layer. |
 
 ## 5. Test data
@@ -79,19 +79,19 @@ Jest matches `*.spec.ts` files by default, so Playwright specs placed inside the
 | Auth token | The backend `auth` middleware compares the `Authorization` header with a hard-coded token. The frontend sends `NEXT_PUBLIC_API_TOKEN` from `.env.local`. | Create calls from the browser and Supertest | Both sides must match. Do not print or commit the real values. |
 | Fixed dates | Tests that call `validateBooking` | Unit and component tests | `getDateBounds` uses the current date, so use a fake clock or compute dates relative to today. |
 
-## 6. Blockers to fix before the tests can run
+## 6. Blockers and their status
 
-| Id | Blocker | Evidence | Needed change |
+| Id | Blocker | Evidence | Status |
 |---|---|---|---|
-| B1 | Importing `BookingService` also imports `utils/db.ts`, which throws if `DATABASE_URL` is missing and creates the Prisma client. | `booking.service.ts` imports `BookingRepository`, which imports `prisma` from `utils/db`. | Mock `../utils/db` in Jest, or set a dummy `DATABASE_URL` for unit tests. |
-| B2 | `index.ts` calls `app.listen(5000)` on import and exports `app`. Supertest would open the port, and clash with a running dev server. | `index.ts` lines for `app.listen` and `export default app`. | Split the app from the listener (a source change that needs agreement). |
-| B3 | Integration tests would run against whichever database `.env` names. | `db.ts` reads `DATABASE_URL`. | Create a separate test database and point `DATABASE_URL` at it for those runs. |
-| B4 | The seed script inserts a `role` column that does not appear in `prisma/schema.prisma`, and it targets `USE cospace;`. | `seed_and_queries.sql` and `schema.prisma`. | Confirm which schema is current before using the seed. This is unverified. |
-| B5 | `app/bookings/[id]/page.tsx` is an async Server Component reading `MOCK_BOOKINGS`. | The page source and the Next.js Jest guide. | Cover it with E2E or call it directly, not with RTL. |
+| B1 | Importing `BookingService` also imports `utils/db.ts`, which throws if `DATABASE_URL` is missing and creates the Prisma client. | `booking.service.ts` imports `BookingRepository`, which imports `prisma` from `utils/db`. | Handled in `tests/app.smoke.test.ts` with `jest.mock("../src/utils/db", ...)`. Any new test that imports the services must do the same or set a dummy `DATABASE_URL`. |
+| B2 | `src/index.ts` called `app.listen(5000)` on import, so Supertest would have opened the port and clashed with a running dev server. | The old `index.ts`. | Fixed. `src/app.ts` builds the app and `src/index.ts` only listens. |
+| B3 | Integration tests would run against whichever database `.env` names. | `db.ts` reads `DATABASE_URL`. | Open. It matters only for tests that persist data, such as check 4 in the strategy. Create a separate test database first. |
+| B4 | The seed script inserts a `role` column that does not appear in `prisma/schema.prisma`, and it targets `USE cospace;`. | `seed_and_queries.sql` and `schema.prisma`. | Open and unverified. Confirm which schema is current before using the seed. |
+| B5 | `app/bookings/[id]/page.tsx` is an async Server Component reading `MOCK_BOOKINGS`. | The page source and the Next.js Jest guide. | Open by design. Cover it with E2E or call it directly, not with RTL. |
 
 ## 7. Assumptions
 
 - The tool list (Jest, React Testing Library, Supertest, Playwright, Cypress) comes from the curriculum text, and no other runner is introduced.
 - Node on this machine is v26.8.2 (from the terminal), and package compatibility with it has not been checked.
 - MySQL is reachable through `DATABASE_URL`, and the test-database setup is not yet done.
-- The proposed install lists and scripts have not been run.
+- The Playwright spec was verified through the installed Google Chrome with a temporary config, because Playwright's own browsers are not installed.
