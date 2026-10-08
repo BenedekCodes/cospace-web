@@ -1,6 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  ensureDesk,
+  getOpportunities,
+  postBooking,
+  type ColleagueOpportunity,
+} from "@/lib/api";
 import BookingCard, { type BookingCardProps } from "./BookingCard";
 import RegistrationForm from "./RegistrationForm";
 import styles from "./BookingList.module.css";
@@ -9,21 +15,61 @@ interface Booking extends BookingCardProps {
   id: number;
 }
 
-const INITIAL_BOOKINGS: Booking[] = [
-  { id: 1, desk: "A12", floor: 2, date: "2026-10-12", active: true },
-  { id: 2, desk: "B07", floor: 4, date: "2026-10-15", active: true },
-  { id: 3, desk: "C03", floor: 1, date: "2026-09-30", active: false },
-];
+function toBooking(b: ColleagueOpportunity): Booking {
+  return {
+    id: b.id,
+    desk: b.desk.name,
+    floor: b.desk.floor,
+    date: b.booking_date.slice(0, 10),
+    active: b.active,
+  };
+}
 
 export default function BookingList() {
-  const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
-  function addBooking(booking: BookingCardProps) {
-    setBookings((prev) => [
-      ...prev,
-      { ...booking, id: Math.max(0, ...prev.map((b) => b.id)) + 1 },
-    ]);
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadBookings() {
+      try {
+        const opportunities = await getOpportunities(controller.signal);
+        setBookings(opportunities.map(toBooking));
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    }
+
+    loadBookings();
+    return () => controller.abort();
+  }, []);
+
+  async function addBooking(booking: BookingCardProps) {
+    // Show the card straight away under a temporary negative id, then swap in the real one.
+    const tempId = -Date.now();
+    setBookings((prev) => [...prev, { ...booking, id: tempId }]);
+
+    try {
+      const desk = await ensureDesk(booking.desk, booking.floor);
+      const saved = await postBooking({
+        desk_id: desk.id,
+        booking_date: booking.date,
+        active: booking.active,
+      });
+      // An existing desk keeps its stored floor, so show that rather than what was typed.
+      setBookings((prev) =>
+        prev.map((b) => (b.id === tempId ? { ...b, id: saved.id, floor: desk.floor } : b)),
+      );
+    } catch (err) {
+      setBookings((prev) => prev.filter((b) => b.id !== tempId));
+      throw err;
+    }
   }
 
   const needle = query.trim().toLowerCase();
@@ -36,19 +82,47 @@ export default function BookingList() {
 
   return (
     <section className={styles.list}>
-      <RegistrationForm onAdd={addBooking} existingBookings={bookings} />
-      <input
-        type="search"
-        className={styles.search}
-        placeholder="Search by desk, floor, date or status"
-        aria-label="Search bookings"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      {visible.length === 0 ? (
+      <div className={styles.panel}>
+        <h2 className={styles.panelTitle}>Add a booking</h2>
+        <RegistrationForm onAdd={addBooking} existingBookings={bookings} />
+      </div>
+
+      <div className={styles.toolbar}>
+        <input
+          type="search"
+          className={styles.search}
+          placeholder="Search bookings"
+          aria-label="Search bookings"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {!isLoading && !error && bookings.length > 0 && (
+          <p className={styles.count} aria-live="polite">
+            {visible.length} of {bookings.length} bookings
+          </p>
+        )}
+      </div>
+
+      {isLoading ? (
+        <p role="status" className={styles.empty}>
+          Loading...
+        </p>
+      ) : error ? (
+        <p role="alert" className={styles.alertBox}>
+          {error}
+        </p>
+      ) : bookings.length === 0 ? (
+        <p className={styles.empty}>No bookings yet.</p>
+      ) : visible.length === 0 ? (
         <p className={styles.empty}>No bookings match &ldquo;{query}&rdquo;.</p>
       ) : (
-        visible.map((booking) => <BookingCard key={booking.id} {...booking} />)
+        <ul className={styles.grid}>
+          {visible.map((booking) => (
+            <li key={booking.id}>
+              <BookingCard {...booking} />
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

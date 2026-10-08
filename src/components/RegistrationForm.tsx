@@ -14,7 +14,7 @@ import {
 import styles from "./RegistrationForm.module.css";
 
 interface RegistrationFormProps {
-  onAdd: (booking: BookingCardProps) => void;
+  onAdd: (booking: BookingCardProps) => Promise<void>;
   existingBookings: ExistingBooking[];
 }
 
@@ -31,6 +31,8 @@ export default function RegistrationForm({
   const [floor, setFloor] = useState("");
   const [date, setDate] = useState("");
   const [errors, setErrors] = useState<Errors>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const baseId = useId();
   const inputRefs = useRef<Record<Field, HTMLInputElement | null>>({
@@ -47,12 +49,15 @@ export default function RegistrationForm({
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     // Stops the browser from reloading the page with a native form POST/GET.
     e.preventDefault();
 
+    if (isLoading) return;
+
     const next = validate();
     setErrors(next);
+    setSubmitError(null);
 
     // Moving focus to the first invalid field makes screen readers announce its error.
     const firstInvalid = FIELD_ORDER.find((field) => next[field]);
@@ -61,11 +66,18 @@ export default function RegistrationForm({
       return;
     }
 
-    onAdd({ desk: desk.trim(), floor: Number(floor), date, active: true });
-    setDesk("");
-    setFloor("");
-    setDate("");
-    inputRefs.current.desk?.focus();
+    setIsLoading(true);
+    try {
+      await onAdd({ desk: desk.trim(), floor: Number(floor), date, active: true });
+      setDesk("");
+      setFloor("");
+      setDate("");
+      inputRefs.current.desk?.focus();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Could not save the booking.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function a11yProps(field: Field) {
@@ -155,9 +167,14 @@ export default function RegistrationForm({
           </p>
         )}
       </div>
-      <button className={styles.button} type="submit">
-        Add booking
+      <button className={styles.button} type="submit" disabled={isLoading}>
+        {isLoading ? "Saving..." : "Add booking"}
       </button>
+      {submitError && (
+        <p role="alert" className={styles.alertBox}>
+          {submitError}
+        </p>
+      )}
     </form>
   );
 }

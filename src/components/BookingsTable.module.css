@@ -1,5 +1,10 @@
+.scroll {
+  overflow-x: auto;
+}
+
 .table {
   width: 100%;
+  min-width: 420px;
   border-collapse: collapse;
 }
 
@@ -19,4 +24,9 @@
 .table thead th {
   color: var(--text-muted);
   font-size: 0.875rem;
+}
+
+.table td,
+.table th[scope="row"] {
+  white-space: nowrap;
 }

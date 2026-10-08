@@ -9,6 +9,7 @@
 
 .header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -20,6 +21,7 @@
   border-radius: 8px;
   background: var(--accent);
   color: var(--accent-fg);
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -29,4 +31,10 @@
 
 .modalTitle {
   margin-bottom: 16px;
+}
+
+@media (max-width: 767px) {
+  .content {
+    padding: 20px 16px;
+  }
 }

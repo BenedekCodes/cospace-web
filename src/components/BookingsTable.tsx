@@ -14,28 +14,35 @@ export default function BookingsTable({
   bookings: TableBooking[];
 }) {
   return (
-    <table className={styles.table}>
-      <caption className={styles.caption}>Desk bookings</caption>
-      <thead>
-        <tr>
-          <th scope="col">Desk</th>
-          <th scope="col">Floor</th>
-          <th scope="col">Date</th>
-          <th scope="col">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {bookings.map((booking) => (
-          <tr key={booking.id}>
-            <th scope="row">{booking.desk}</th>
-            <td>{booking.floor}</td>
-            <td>
-              <time dateTime={booking.date}>{booking.date}</time>
-            </td>
-            <td>{booking.status}</td>
+    <div
+      className={styles.scroll}
+      role="region"
+      aria-label="Desk bookings table"
+      tabIndex={0}
+    >
+      <table className={styles.table}>
+        <caption className={styles.caption}>Desk bookings</caption>
+        <thead>
+          <tr>
+            <th scope="col">Desk</th>
+            <th scope="col">Floor</th>
+            <th scope="col">Date</th>
+            <th scope="col">Status</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {bookings.map((booking) => (
+            <tr key={booking.id}>
+              <th scope="row">{booking.desk}</th>
+              <td>{booking.floor}</td>
+              <td>
+                <time dateTime={booking.date}>{booking.date}</time>
+              </td>
+              <td>{booking.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -24,7 +24,9 @@ export default function BookingCard({
 
   return (
     <Link href={`/bookings/${id}`} className={styles.link}>
-      <article className={styles.card}>
+      <article
+        className={`${styles.card} ${active ? styles.cardActive : styles.cardInactive}`}
+      >
         <header className={styles.header}>
           <h2 className={styles.title}>Desk {desk}</h2>
           <span className={active ? styles.active : styles.inactive}>
@@ -32,13 +34,20 @@ export default function BookingCard({
           </span>
         </header>
         <dl className={styles.details}>
-          <dt>Floor</dt>
-          <dd>{floor}</dd>
-          <dt>Date</dt>
-          <dd>
-            <time dateTime={date}>{formattedDate}</time>
-          </dd>
+          <div>
+            <dt>Floor</dt>
+            <dd>{floor}</dd>
+          </div>
+          <div>
+            <dt>Date</dt>
+            <dd>
+              <time dateTime={date}>{formattedDate}</time>
+            </dd>
+          </div>
         </dl>
+        <span className={styles.cta} aria-hidden="true">
+          View details &rarr;
+        </span>
       </article>
     </Link>
   );
