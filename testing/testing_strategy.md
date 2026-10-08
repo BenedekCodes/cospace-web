@@ -52,4 +52,4 @@ Other vague statements replaced with evidence:
 ## Assumptions
 
 - The ranking uses the source as read and assumes the frontend runs against the real backend, not the mock detail data.
-- No test runner is installed in either package, so these are planned levels, not existing tests.
+- Jest, Supertest, Playwright and Cypress are installed with smoke tests only (see `environment_checklist.md`). The six classified checks above are planned levels, not yet written tests.
